@@ -19,7 +19,8 @@ switch ($action) {
         header('Content-Type: application/json; charset=utf-8');
         $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'Unbekannt';
         $serverName = gethostname() ?: ($_SERVER['SERVER_NAME'] ?? 'Localhost');
-        $serverIp = $_SERVER['SERVER_ADDR'] ?? gethostbyname($serverName);
+        $hostHeader = isset($_SERVER['HTTP_HOST']) ? explode(':', $_SERVER['HTTP_HOST'])[0] : '';
+        $serverIp = $_SERVER['SERVER_ADDR'] ?? ($hostHeader ?: gethostbyname($serverName));
         $serverPort = $_SERVER['SERVER_PORT'] ?? '';
 
         echo json_encode([
