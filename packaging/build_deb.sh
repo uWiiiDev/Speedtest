@@ -38,8 +38,8 @@ cat << 'EOF' > "${BUILD_ROOT}/etc/default/intranet-speedtest"
 # Standard-Port für die Weboberfläche (8080 kollidiert nicht mit NetworkMonitor auf 8085)
 PORT=8080
 
-# Bind-Adresse (0.0.0.0 = im gesamten LAN & über VPN erreichbar)
-BIND_ADDR=0.0.0.0
+# Bind-Adresse ([::0] = Dual-Stack IPv4 + IPv6 im gesamten LAN & über VPN erreichbar)
+BIND_ADDR=[::0]
 EOF
 chmod 0644 "${BUILD_ROOT}/etc/default/intranet-speedtest"
 
@@ -124,6 +124,14 @@ if command -v systemctl >/dev/null 2>&1; then
     systemctl daemon-reload >/dev/null 2>&1 || true
     systemctl enable intranet-speedtest.service >/dev/null 2>&1 || true
     systemctl restart intranet-speedtest.service >/dev/null 2>&1 || true
+fi
+
+if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "Status: active"; then
+    ufw allow from 192.168.0.0/16 to any port 8080 proto tcp comment "Intranet Speedtest LAN IPv4" >/dev/null 2>&1 || true
+    ufw allow from 10.0.0.0/8 to any port 8080 proto tcp comment "Intranet Speedtest VPN/LAN 10.x" >/dev/null 2>&1 || true
+    ufw allow from 172.16.0.0/12 to any port 8080 proto tcp comment "Intranet Speedtest LAN 172.16.x" >/dev/null 2>&1 || true
+    ufw allow from fd00::/8 to any port 8080 proto tcp comment "Intranet Speedtest LAN IPv6 ULA" >/dev/null 2>&1 || true
+    ufw allow from fe80::/10 to any port 8080 proto tcp comment "Intranet Speedtest LAN IPv6 Link-Local" >/dev/null 2>&1 || true
 fi
 
 echo "======================================================================"
